@@ -23,8 +23,8 @@ public class CsvBash {
 
     public static void main(String[] args) throws Exception {
         StreamExecutionEnvironment see = StreamExecutionEnvironment.getExecutionEnvironment();
-
-        DataStream<ListentCsvEntity> edits = see.addSource(new ListentCsvSource());
+        see.setParallelism(4);
+        DataStream<ListentCsvEntity> edits = see.addSource(new ListentCsvSource()).setParallelism(1);
 
         KeyedStream<ListentCsvEntity, String> keyedEdits = edits
                 .keyBy(new KeySelector<ListentCsvEntity, String>() {
@@ -35,7 +35,7 @@ public class CsvBash {
                 });
 
         DataStream<Tuple2<String, Long>> result = keyedEdits
-                .timeWindow(Time.seconds(5))
+                .timeWindow(Time.seconds(1))
                 .fold(new Tuple2<>("", 0L), new FoldFunction<ListentCsvEntity, Tuple2<String, Long>>() {
                     @Override
                     public Tuple2<String, Long> fold(Tuple2<String, Long> acc, ListentCsvEntity event) {
@@ -44,15 +44,7 @@ public class CsvBash {
                         return acc;
                     }
                 });
-
-
-        //result.print();
-        result.map(new MapFunction<Tuple2<String,Long>, String>() {
-            @Override
-            public String map(Tuple2<String, Long> tuple) {
-                return tuple.toString();
-            }
-        }).addSink(new FlinkKafkaProducer08<>("localhost:9092", "wiki-result", new SimpleStringSchema()));
+        result.print();
         see.execute();
     }
 }

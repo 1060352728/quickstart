@@ -21,15 +21,13 @@ public class FlinkKafka {
         properties.setProperty("zookeeper.connect", "192.168.138.128:2181,192.168.138.129:2181,192.168.138.130:2181,192.168.138.131:2181,192.168.138.132:2181");
         properties.setProperty("bootstrap.servers", "192.168.138.128:9092,192.168.138.129:9092,192.168.138.130:9092,192.168.138.131:9092,192.168.138.132:9092");
         properties.setProperty("group.id","metric-group");
-        DataStream stream = environment.addSource(new FlinkKafkaConsumer08<>(
-                "tmf", new SimpleStringSchema(), properties) );
+        DataStream<String> stream = environment.addSource(new FlinkKafkaConsumer08<>("tmf", new SimpleStringSchema(), properties));
         stream.map(new MapFunction<String,String>() {
             private static final long serialVersionUID = -6867736771747690202L;
             @Override
             public String map(String value) throws Exception {
                 return "Stream Value: " + value;
             }
-
         }).print();
         environment.execute();
     }
